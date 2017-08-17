@@ -41,7 +41,7 @@ object MCMC {
 		val kernel = Gaussian(0.0, 1.0)
 		println("Fitting...")
 		metrop7(kernel, target).take(20).foreach(println)
-		print("Done.")
+		println("Done.")
   }
 
 }
