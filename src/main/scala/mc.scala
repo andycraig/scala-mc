@@ -8,11 +8,14 @@ import breeze.stats.distributions._
 
 object MCMC {
 
-	//TODO Currently target is just a function Double -> Double.
-	// Can this be made more strict, so that it is a log probability?
+	def logPriorTimesLik(prior: ContinuousDistr[Double],
+										lik: (Double) => ContinuousDistr[Double],
+										data: DenseVector[Double])(theta: Double): Double = {
+		val priorComponent = prior.logPdf(theta)
+		val likComponent = data.map(x => lik(theta).logPdf(x)).reduce(_+_)
+		priorComponent + likComponent
+	}
 
-	// Altered version of newState.
-	// I think nextState(eps) returns a function ((Double, Double) -> (Double, Double)).
 	def nextState(kernel: ContinuousDistr[Double],
 						targetLogPdf: (Double) => Double)(state: (Double, Double)): (Double, Double) = {
 		val x = state._1
@@ -29,24 +32,16 @@ object MCMC {
 						oldll: Double = Double.MinValue): Stream[Double] =
 		Stream.iterate((x, oldll))(nextState(kernel, targetLogPdf)) map (_._1)
 
-
   def main(args: Array[String]): Unit = {
-		// Some made-up data.
-		val data = DenseVector(0.01, -0.3, 1)
-		// Prior with wrong mean.
-		val prior = Gaussian(-1.0, 1.0)
-		// like is a function of theta, the parameter we will fit.
-		// (Assume we know the variance.)
-		val lik = (theta: Double) => Gaussian(theta, 1.0)
 		// Define target, which is just a function Double -> Double.
-		//TODO Make a function that takes a prior, a likelihood and data, and returns this function.
-		val target = (theta: Double) => (prior.logPdf(theta) +
-							data.map(lik(theta).logPdf(_)).reduce(_+_))
+		val target = logPriorTimesLik(
+			prior = Gaussian(-1.0, 1.0),
+			lik = (theta: Double) => Gaussian(theta, 1.0),
+			data = DenseVector(0.01, -0.3, 1)) _ // Underscore because it is function.
 		val kernel = Gaussian(0.0, 1.0)
 		println("Fitting...")
-		metrop7(kernel, target).take(10)
+		metrop7(kernel, target).take(20).foreach(println)
 		print("Done.")
-
   }
 
 }
