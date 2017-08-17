@@ -6,6 +6,33 @@ https://darrenjw.wordpress.com/2010/08/15/metropolis-hastings-mcmc-algorithms/
 import breeze.linalg._
 import breeze.stats.distributions._
 
+object SMC {
+	def smc(qs: DenseVector[ContinuousDistr[Double]],
+					x1: Double,
+				 	data: DenseVector[Double]): ? = {
+		//TODO Stream.iterate smcStep
+	}
+
+	// Take in a distribution q and particles.
+	// @return N new equally-weighted particles.
+	def smcStep(q: ContinuousDistr[Double],
+							Xbar_1_to_n_minus_1: DenseVector[Double]): DenseVector[Double] = {
+		Xbar_1_to_n_minus_1.foreach //TODO Sample a new particular from q.
+		//TODO Compute weights
+		smcResample //TODO
+		//TODO Return result of smcResample.
+	}
+
+	def smcGetWeights(): Something = {
+		//TODO Implement
+	}
+
+	// Given particles and associated weights,
+	// @return Resampled particles with equal weights.
+	def smcResample(weights_xs: DenseVector[(Double, Double)]): DenseVector[(Double, Double)] = {
+		//TODO Implement
+	}
+}
 object MCMC {
 
 	def logPriorTimesLik(prior: ContinuousDistr[Double],
@@ -31,7 +58,9 @@ object MCMC {
 						x: Double = 0.0,
 						oldll: Double = Double.MinValue): Stream[Double] =
 		Stream.iterate((x, oldll))(nextState(kernel, targetLogPdf)) map (_._1)
+}
 
+object mc {
   def main(args: Array[String]): Unit = {
 		// Define target, which is just a function Double -> Double.
 		val target = logPriorTimesLik(
@@ -40,7 +69,7 @@ object MCMC {
 			data = DenseVector(0.01, -0.3, 1)) _ // Underscore because it is function.
 		val kernel = Gaussian(0.0, 1.0)
 		println("Fitting...")
-		metrop7(kernel, target).take(20).foreach(println)
+		MCMC.metrop7(kernel, target).take(20).foreach(println)
 		println("Done.")
   }
 
