@@ -18,12 +18,13 @@ object SMC {
 	def smcStep(q: ContinuousDistr[Double],
 							Xbar_1_to_n_minus_1: DenseVector[Double]): DenseVector[Double] = {
 		Xbar_1_to_n_minus_1.foreach //TODO Sample a new particular from q.
-		//TODO Compute weights
+		smcGetWeights//TODO Compute weights
 		smcResample //TODO
 		//TODO Return result of smcResample.
 	}
 
-	def smcGetWeights(): Something = {
+	// @return Vector of weights.
+	def smcGetWeights(): DenseVector[Double] = {
 		//TODO Implement
 	}
 
