@@ -6,34 +6,60 @@ https://darrenjw.wordpress.com/2010/08/15/metropolis-hastings-mcmc-algorithms/
 import breeze.linalg._
 import breeze.stats.distributions._
 
-object SMC {
-	def smc(qs: DenseVector[ContinuousDistr[Double]],
+object ParticleFilter {
+
+	// @param q The importance distribution.
+	// @param g The observation distribution.
+	// @param f The state evolution distribution.
+	def particleFilter(
+					q: ContinuousDistr[Double],
 					x1: Double,
-				 	data: DenseVector[Double]): ? = {
+					ys: DenseVector[Double],
+					g: ContinuousDistr[Double],
+					f: ContinuousDistr[Double]): ? = {
 		//TODO Stream.iterate smcStep
 	}
 
 	// Take in a distribution q and particles.
 	// @return N new equally-weighted particles.
-	def smcStep(q: ContinuousDistr[Double],
-							Xbar_1_to_n_minus_1: DenseVector[Double]): DenseVector[Double] = {
-		Xbar_1_to_n_minus_1.foreach //TODO Sample a new particular from q.
-		smcGetWeights//TODO Compute weights
-		smcResample //TODO
+	def step(q: ContinuousDistr[Double],
+						X_n_minus_1: DenseVector[Double],
+						y: Double): DenseVector[Double] = {
+		X_n_minus_1.foreach //TODO Sample a new particular from q.
+		getWeights//TODO Compute weights
+		resample //TODO
 		//TODO Return result of smcResample.
 	}
 
 	// @return Vector of weights.
-	def smcGetWeights(): DenseVector[Double] = {
-		//TODO Implement
+	def getAWeight(g: (Double) => ContinuousDistr[Double],
+								f: (Double) => ContinuousDistr[Double],
+								y,
+								X_n,
+								X_n_minus_1): Double = {
+		//TODO Computer NORMALIZATION? Might not need to if can Sample
+		// W from unnormalised.
+		alpha = g(X_n).pdf(y) * f(X_n_minus_1).pdf(X_n) / NORMALIZATION
+		W = //TODO
+	}
+
+	def getWeights(g: (Double) => ContinuousDistr[Double],
+								f: (Double) => ContinuousDistr[Double],
+								y,
+								X_n,
+								X_n_minus_1): Double = {
+		zip(X_n, X_n_minus_1).map(getAWeight).//TODO To DenseVector.
 	}
 
 	// Given particles and associated weights,
+	// @param W Weights.
+	// @param X_1_to_n Particles.
 	// @return Resampled particles with equal weights.
-	def smcResample(weights_xs: DenseVector[(Double, Double)]): DenseVector[(Double, Double)] = {
+	def resample(W: DenseVector[(Double, Double)]): DenseVector[(Double, Double)] = {
 		//TODO Implement
 	}
 }
+
 object MCMC {
 
 	def logPriorTimesLik(prior: ContinuousDistr[Double],
