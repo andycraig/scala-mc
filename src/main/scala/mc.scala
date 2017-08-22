@@ -8,55 +8,26 @@ import breeze.stats.distributions._
 
 object ParticleFilter {
 
-	// @param q The importance distribution.
 	// @param g The observation distribution.
 	// @param f The state evolution distribution.
 	def particleFilter(
-					q: ContinuousDistr[Double],
 					x1: Double,
 					ys: DenseVector[Double],
-					g: ContinuousDistr[Double],
-					f: ContinuousDistr[Double]): ? = {
+					moveDist: (Double) => ContinuousDistr[Double],
+					obsDist: (Double) => ContinuousDistr[Double]): ? = {
 		//TODO Stream.iterate smcStep
 	}
 
 	// Take in a distribution q and particles.
 	// @return N new equally-weighted particles.
-	def step(q: ContinuousDistr[Double],
+	def step(moveDist: (Double) => ContinuousDistr[Double],
+						obsDist: (Double) => ContinuousDistr[Double],
 						X_n_minus_1: DenseVector[Double],
 						y: Double): DenseVector[Double] = {
-		X_n_minus_1.foreach //TODO Sample a new particular from q.
-		getWeights//TODO Compute weights
-		resample //TODO
+		val samples_unnormalised_weights = X_n_minus_1.foreach((x: Double) => moveDist(X_n_minus_1).pdf(x) ANDTHEN obsDist(y).pdf(.)) //TODO Sample a new particular from q.
+		val samples_weights = //TODO Normalise
+		val resamples = REPEAT(Multinomial(weights, samples).draw)
 		//TODO Return result of smcResample.
-	}
-
-	// @return Vector of weights.
-	def getAWeight(g: (Double) => ContinuousDistr[Double],
-								f: (Double) => ContinuousDistr[Double],
-								y,
-								X_n,
-								X_n_minus_1): Double = {
-		//TODO Computer NORMALIZATION? Might not need to if can Sample
-		// W from unnormalised.
-		alpha = g(X_n).pdf(y) * f(X_n_minus_1).pdf(X_n) / NORMALIZATION
-		W = //TODO
-	}
-
-	def getWeights(g: (Double) => ContinuousDistr[Double],
-								f: (Double) => ContinuousDistr[Double],
-								y,
-								X_n,
-								X_n_minus_1): Double = {
-		zip(X_n, X_n_minus_1).map(getAWeight).//TODO To DenseVector.
-	}
-
-	// Given particles and associated weights,
-	// @param W Weights.
-	// @param X_1_to_n Particles.
-	// @return Resampled particles with equal weights.
-	def resample(W: DenseVector[(Double, Double)]): DenseVector[(Double, Double)] = {
-		//TODO Implement
 	}
 }
 
