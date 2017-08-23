@@ -8,26 +8,36 @@ import breeze.stats.distributions._
 
 object ParticleFilter {
 
-	// @param g The observation distribution.
-	// @param f The state evolution distribution.
+	// @param obsDist The observation distribution, parameterised by the mean.
+	// @param moveDist The state evolution distribution, parameterised by the mean.
 	def particleFilter(
 					x1: Double,
-					ys: DenseVector[Double],
+					ys: Seq[Double],
 					moveDist: (Double) => ContinuousDistr[Double],
 					obsDist: (Double) => ContinuousDistr[Double]): ? = {
-		//TODO Stream.iterate smcStep
+		ys.SOMETHING(step(moveDist = moveDist, obsDist = obsDist))
+		//Stream.iterate((x, oldll))(step(moveDist = moveDist, obsDist = obsDist)) map (_._1)
 	}
 
-	// Take in a distribution q and particles.
-	// @return N new equally-weighted particles.
+	/* Takes in a pair of distributions, and returns a function that takes in
+		particles, and returns a function that takes in a datum and returns new particles.
+		Essentially:
+		1. It is initialised with the distributions.
+		2. That is initialised with particles.
+		3. That is passed a datum, returning new particles.
+		So it can 'crawl along' a series of data points, updating
+	*/ @return N new equally-weighted particles.
 	def step(moveDist: (Double) => ContinuousDistr[Double],
-						obsDist: (Double) => ContinuousDistr[Double],
-						X_n_minus_1: DenseVector[Double],
-						y: Double): DenseVector[Double] = {
-		val samples_unnormalised_weights = X_n_minus_1.foreach((x: Double) => moveDist(X_n_minus_1).pdf(x) ANDTHEN obsDist(y).pdf(.)) //TODO Sample a new particular from q.
-		val samples_weights = //TODO Normalise
-		val resamples = REPEAT(Multinomial(weights, samples).draw)
-		//TODO Return result of smcResample.
+						obsDist: (Double) => ContinuousDistr[Double])
+						(X_n_minus_1: Seq[Double]),
+						(y: Double): Seq[Double] = {
+		val samples = X_n_minus_1.map(moveDist(X_n_minus_1).pdf(_))
+		val unnormalised_weights = samples.map(obsDist(y).pdf(_)) //TODO Sample a new particular from q.
+		val weights_sum = unnormalised_weights.reduce(_+_)
+		val weights = unnormalised_weights.map(_ / weights_sum)
+		val sampleDist = Multinomial(weights, samples)
+		val X_n = for (unused <- samples_weights) yield sampleDist.draw
+		X_n
 	}
 }
 
