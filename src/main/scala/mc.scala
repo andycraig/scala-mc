@@ -38,12 +38,12 @@ object ParticleFilter {
 		//TODO Fix this line. Should this be:
 		// val samples = X_n_minus_1.map(moveDist(_).draw)
 		// ? Check what it is supposed to be doing.
-		val samples = X_n_minus_1.map(moveDist(X_n_minus_1).pdf(_))
+		val samples = X_n_minus_1.map(moveDist(_).draw)
 		val unnormalised_weights = samples.map(obsDist(y).pdf(_))
-		val weights_sum = unnormalised_weights.reduce(_+_)
+		val weights_sum = breeze.linalg.sum(unnormalised_weights)
 		val weights = unnormalised_weights.map(_ / weights_sum)
-		val sampleDist = Multinomial(weights, samples)
-		val X_n = for (unused <- samples_weights) yield sampleDist.draw
+		val sampleDist = Multinomial[DenseVector[Double], Int](DenseVector[Double](weights:_*))
+		val X_n = for (unused <- samples) yield samples(sampleDist.draw)
 		X_n
 	}
 }
@@ -79,7 +79,7 @@ object mc {
   def main(args: Array[String]): Unit = {
 		println("=== MCMC ===")
 		// Define target, which is just a function Double -> Double.
-		val target = logPriorTimesLik(
+		val target = MCMC.logPriorTimesLik(
 			prior = Gaussian(-1.0, 1.0),
 			lik = (theta: Double) => Gaussian(theta, 1.0),
 			data = DenseVector(0.01, -0.3, 1)) _ // Underscore because it is function.
@@ -90,8 +90,8 @@ object mc {
 		println("=== Particle Filter ===")
 
 		println("Filtering...")
-		val particles = ParticleFilter.ParticleFilter(
-			ys = DenseVector(1, 1.5, 0.5),
+		val particles = ParticleFilter.particleFilter(
+			ys = Seq(1, 1.5, 0.5),
 			moveDist = (mu: Double) => Gaussian(mu, 1.0),
 			obsDist = (mu: Double) => Gaussian(mu, 0.5),
 			x_1 = Seq(0.0, 0.5, 1, 1.5, 2.0))
