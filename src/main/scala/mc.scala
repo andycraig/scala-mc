@@ -17,9 +17,10 @@ object ParticleFilter {
 					x_1: Seq[Double],
 					ys: Seq[Double],
 					moveDist: (Double) => ContinuousDistr[Double],
-					obsDist: (Double) => ContinuousDistr[Double]): Seq[Double] = {
+					obsDist: (Double) => ContinuousDistr[Double]): Seq[Seq[Double]] = {
 		val stepFn = step(moveDist = moveDist, obsDist = obsDist) _
-		ys.foldLeft(x_1){ (x_n_minus_1, y) => stepFn(x_n_minus_1)(y) }
+		val particles = ys.scanLeft(x_1){ (x_n_minus_1, y) => stepFn(x_n_minus_1)(y) }
+		particles
 	}
 
 	/* Takes in a pair of distributions, and returns a function that takes in
@@ -95,6 +96,7 @@ object mc {
 			moveDist = (mu: Double) => Gaussian(mu, 1.0),
 			obsDist = (mu: Double) => Gaussian(mu, 0.5),
 			x_1 = Seq(0.0, 0.5, 1, 1.5, 2.0))
+		println(particles)
 		println("Done.")
   }
 
