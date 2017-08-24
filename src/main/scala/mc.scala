@@ -8,15 +8,18 @@ import breeze.stats.distributions._
 
 object ParticleFilter {
 
-	// @param obsDist The observation distribution, parameterised by the mean.
-	// @param moveDist The state evolution distribution, parameterised by the mean.
+	// @param x_1 The initial particles.
+	// @param ys The data for fitting.
+	// @param obsDist The observation distribution, with a single parameter.
+	// @param moveDist The state evolution distribution, with a single parameter.
+	// @return The particles at the end.
 	def particleFilter(
-					x1: Double,
+					x_1: Seq[Double],
 					ys: Seq[Double],
 					moveDist: (Double) => ContinuousDistr[Double],
-					obsDist: (Double) => ContinuousDistr[Double]): ? = {
-		ys.SOMETHING(step(moveDist = moveDist, obsDist = obsDist))
-		//Stream.iterate((x, oldll))(step(moveDist = moveDist, obsDist = obsDist)) map (_._1)
+					obsDist: (Double) => ContinuousDistr[Double]): Seq[Double] = {
+		val stepFn = step(moveDist = moveDist, obsDist = obsDist) _
+		ys.foldLeft(x_1){ (x_n_minus_1, y) => stepFn(x_n_minus_1)(y) }
 	}
 
 	/* Takes in a pair of distributions, and returns a function that takes in
@@ -26,13 +29,17 @@ object ParticleFilter {
 		2. That is initialised with particles.
 		3. That is passed a datum, returning new particles.
 		So it can 'crawl along' a series of data points, updating
-	*/ @return N new equally-weighted particles.
+		@return N new equally-weighted particles.
+	*/
 	def step(moveDist: (Double) => ContinuousDistr[Double],
 						obsDist: (Double) => ContinuousDistr[Double])
-						(X_n_minus_1: Seq[Double]),
+						(X_n_minus_1: Seq[Double])
 						(y: Double): Seq[Double] = {
+		//TODO Fix this line. Should this be:
+		// val samples = X_n_minus_1.map(moveDist(_).draw)
+		// ? Check what it is supposed to be doing.
 		val samples = X_n_minus_1.map(moveDist(X_n_minus_1).pdf(_))
-		val unnormalised_weights = samples.map(obsDist(y).pdf(_)) //TODO Sample a new particular from q.
+		val unnormalised_weights = samples.map(obsDist(y).pdf(_))
 		val weights_sum = unnormalised_weights.reduce(_+_)
 		val weights = unnormalised_weights.map(_ / weights_sum)
 		val sampleDist = Multinomial(weights, samples)
@@ -70,6 +77,7 @@ object MCMC {
 
 object mc {
   def main(args: Array[String]): Unit = {
+		println("=== MCMC ===")
 		// Define target, which is just a function Double -> Double.
 		val target = logPriorTimesLik(
 			prior = Gaussian(-1.0, 1.0),
@@ -78,6 +86,15 @@ object mc {
 		val kernel = Gaussian(0.0, 1.0)
 		println("Fitting...")
 		MCMC.metrop7(kernel, target).take(20).foreach(println)
+		println("Done.")
+		println("=== Particle Filter ===")
+
+		println("Filtering...")
+		val particles = ParticleFilter.ParticleFilter(
+			ys = DenseVector(1, 1.5, 0.5),
+			moveDist = (mu: Double) => Gaussian(mu, 1.0),
+			obsDist = (mu: Double) => Gaussian(mu, 0.5),
+			x_1 = Seq(0.0, 0.5, 1, 1.5, 2.0))
 		println("Done.")
   }
 
